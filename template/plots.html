@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Website Title</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style2.css')}}" />
+
+</head>
+
+<body>
+    <div class="container-fluid h-100">
+        <div class="row h-100">
+            <div class="col-3 chat-section align-items-center">
+                <h2>Chart History</h2>
+                {% for file in html_files %}
+                <div class="chat-item d-flex justify-content-between align-items-center">
+                    <button class="chat-file-name" onclick="window.location.href='/uploads/{{ file }}';">{{ file
+                        }}</button>
+                    <button class="btn btn-sm btn-outline-danger chat-delete-button" data-file-name="{{ file }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="col-9 main-section">
+                <div class="container-fluid h-100">
+                    <div class="row">
+                        <div class="col-12 my-auto input-section">
+                            <form id="input-form" enctype="multipart/form-data">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" placeholder="Enter your query here..."
+                                        id="user-input">
+                                    <button class="btn btn-outline-secondary" type="button"><i
+                                            class="fas fa-microphone"></i></button>
+                                    <div class="input-group-append">
+                                        <input type="file" id="upload-file" name="file" hidden>
+                                        <label for="upload-file" class="btn btn-outline-secondary" id="upload-button"><i
+                                                class="fas fa-upload"></i> Choose File</label>
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><i class="fas fa-location-arrow"></i>
+                                        Submit</button>
+                                </div>
+                                <div id="loading-container" class="d-none">
+                                    <div class="spinner-border text-primary justify-content-center align-items-center"
+                                        role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="user-query"></div>
+                        <div class="col-12 graph-section">
+                            <div id="graph-container" class="d-flex justify-content-center align-items-center"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const inputForm = $("#input-form");
+            const userInput = $("#user-input");
+            const loadingContainer = $("#loading-container");
+            const graphContainer = $("#graph-container");
+            const uploadFile = $("#upload-file");
+            const uploadButton = $("#upload-button");
+
+            uploadFile.change(function () {
+                const fileName = $(this).val().split("\\").pop();
+                $("#upload-button").text(`Chosen: ${fileName}`);
+            });
+
+            function submitQuery(rawText) {
+                // Show user query
+                const userQueryHtml = `<div class="d-flex d-flex justify-content-start"><div class="msg_cotainer_send">Graph generated based on input: ${rawText}</div></div>`;
+                $("#user-query").html(userQueryHtml);
+
+                $.ajax({
+                    data: {
+                        query: rawText,
+                    },
+                    type: "POST",
+                    url: "/ask",
+                }).done(function (data) {
+                    console.log(data);
+                    const botInsight = data.response;
+                    const graphData = data.graph;
+
+                    if (graphData) {
+                        const graphImage = $(`<img src="data:image/png;base64,${graphData}">`);
+                        graphContainer.empty().append(graphImage); // Clear and append
+                    } else {
+                        alert("No graph generated for this query.");
+                    }
+
+                    loadingContainer.addClass("d-none");
+
+                });
+
+            }
+
+            inputForm.submit(function (event) {
+                event.preventDefault();
+
+                const rawText = userInput.val();
+
+                // Show loading animation
+                loadingContainer.removeClass("d-none");
+
+                // Check if file was uploaded
+                if (uploadFile[0].files.length > 0) {
+                    // Handle file upload
+                    const formData = new FormData();
+                    formData.append("file", uploadFile[0].files[0]);
+
+                    $.ajax({
+                        url: "/upload",
+                        type: "POST",
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            console.log(response);
+                            alert("File uploaded successfully!");
+                            uploadFile.val(""); // Clear file input
+                            $("#upload-button").text("Choose File"); // Reset button text
+
+                            // Proceed with text query submission if needed
+                            if (rawText) {
+                                submitQuery(rawText);
+                            }
+                        },
+                        error: function (error) {
+                            console.error(error);
+                            alert("An error occurred during file upload.");
+                        },
+                        complete: function () {
+                            loadingContainer.addClass("d-none");
+                        }
+                    });
+                } else {
+                    // Handle text query submission
+                    submitQuery(rawText);
+                }
+            });
+
+            $(".chat-delete-button").click(function (event) {
+                event.preventDefault();
+                let fileName = $(this).data("file-name");
+
+                if (confirm(`Are you sure you want to delete the chart "${fileName}"?`)) {
+                    $.ajax({
+                        url: "/delete_chart",
+                        method: "POST",
+                        data: { file_name: fileName },
+                        success: function (response) {
+                            if (response.success) {
+                                // Remove the deleted file from the list
+                                let item = $(`.chat-item button[data-file-name="${fileName}"]`).parent();
+                                item.remove();
+                                alert("Chart deleted successfully!");
+                            } else {
+                                alert("Error deleting chart. Please try again later.");
+                            }
+                        },
+                        error: function (error) {
+                            console.error(error);
+                            alert("An error occurred. Please try again later.");
+                        }
+                    });
+                }
+            });
+
+        });
+    </script>
+</body>
+
+</html>

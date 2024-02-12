@@ -1,0 +1,93 @@
+.container-fluid {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-section {
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ccc;
+    height: 100vh;
+}
+
+.graph-section {
+    background-color: #eee;
+    flex-grow: 1;
+}
+
+.user_img {
+    height: 100px;
+    width: 100px;
+}
+
+.user_img_msg {
+    height: 40px;
+    width: 40px;
+    border: 1.5px solid #f5f6fa;
+}
+
+.img_cont_msg {
+    height: 40px;
+    width: 40px;
+}
+
+.main-section {
+    background-color: #f0f0f0;
+}
+
+.chat-section {
+    background-color: #ddd;
+}
+
+#user-query,
+#graph-container {
+    padding: 1rem;
+}
+.chat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.chat-section button {
+    padding: 0.5rem 1rem;
+    margin: 0.5rem 0;
+    cursor: pointer;
+}
+
+.chat-section button:hover {
+    background-color: #f0f0f0;
+}
+
+.chat-file-name {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    background-color: #72b2f3;
+    text-overflow: ellipsis;
+    width: 85%;
+}
+
+.chat-delete-button {
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    width: 15%;
+    background-color: #72b2f3;
+    cursor: pointer;
+    color: #f00;
+    transition: color 0.2s ease-in-out;
+}
+
+.chat-delete-button:hover {
+    color: #f00;
+}
+
+/* New rule to display icon always */
+.chat-delete-button i {
+    display: inline-block;
+    margin-right: 5px;
+}
