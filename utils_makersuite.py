@@ -354,7 +354,7 @@ def function3(part_A, part_B, part_C, nlp_query, file_path):
 
     prompt_parts = [
         f"""
-    - The script should read data from a CSV file located at 'G:/pathsetter/results_final1.csv'.
+    - The script should read data from a CSV file located at '{final_file}'.
 
     EXAMPLE STRUCTURE :::
     '''
